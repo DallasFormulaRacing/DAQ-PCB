@@ -1,0 +1,23 @@
+# Ignore list for KiCAD Projects
+# Temporary files
+*/Hardware/*/*.000
+*/Hardware/*/*.bak
+*/Hardware/*/*.bck
+*/Hardware/*/*.kicad_pcb-bak
+*/Hardware/*/*.sch-bak
+*/Hardware/*/*~
+*/Hardware/*/_autosave-*
+*/Hardware/*/*.tmp
+*/Hardware/*/*-save.pro
+*/Hardware/*/*-save.kicad_pcb
+*/Hardware/*/fp-info-cache
+
+# Netlist files (exported from Eeschema)
+*/Hardware/*/*.net
+
+# Autorouter files (exported from Pcbnew)
+*/Hardware/*/*.dsn
+*/Hardware/*/*.ses
+
+# Exported BOM files
+*/Hardware/*/*.xml
