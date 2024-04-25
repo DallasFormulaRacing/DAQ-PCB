@@ -1,3 +1,19 @@
+###########################################
+#            Firmware Folder
+###########################################
+
+# stm32 on CubeIDE firmware builds
+*/Firmware/*/Debug/
+
+# stm32 on VSCode firmware builds
+*/Firmware/*/build/
+*/Firmware/*/cmake/
+
+
+###########################################
+#            Hardware Folder
+###########################################
+
 # Ignore list for KiCAD Projects
 # Temporary files
 */Hardware/*/*.000
