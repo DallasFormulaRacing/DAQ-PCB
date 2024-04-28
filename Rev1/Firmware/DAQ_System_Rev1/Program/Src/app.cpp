@@ -23,15 +23,25 @@ extern UART_HandleTypeDef huart1;
 
 
 // 3rd Party Libraries and Frameworks
+#include "cmsis_os.h"
 
 
 // DFR Custom Dependencies
 #include "../../Core/Inc/retarget.h"
 
 
+void RtosInit();
+void DataLoggingThread(void *argument);
+
+
 void cppMain() {
 	// Enable `printf()` using USART
 	RetargetInit(&huart1);
+
+	RtosInit();
+	/*
+	 * When `RtosInit()` is enabled, the rest of this function does NOT execute.
+	 */
 
 
 	for(;;) {
@@ -39,4 +49,46 @@ void cppMain() {
 		HAL_GPIO_TogglePin(GPIOE, GPIO_PIN_2);
 
 	}
+}
+
+
+/**************************************************************
+ * 					RTOS Thread Properties
+ **************************************************************/
+osThreadId_t dataLoggingTaskHandle;
+const osThreadAttr_t dataLoggingTask_attributes = {
+  .name = "dataLoggingTask",
+  .stack_size = 128 * 20,
+  .priority = (osPriority_t) osPriorityHigh,
+};
+
+
+/**************************************************************
+ * 						RTOS Threads
+ **************************************************************/
+void DataLoggingThread(void *argument) {
+	for (;;) {
+		HAL_Delay(2000);
+		HAL_GPIO_TogglePin(GPIOE, GPIO_PIN_2);
+	}
+}
+
+
+void RtosInit() {
+	NVIC_SetPriorityGrouping( 0 );	// For allowing hardware (not RTOS/software) interrupts while the Kernel is running
+	osKernelInitialize(); 			// Initialize scheduler
+
+	// Threads
+	dataLoggingTaskHandle = osThreadNew(DataLoggingThread, NULL, &dataLoggingTask_attributes);
+//	timestampTaskHandle = osThreadNew(TimestampThread, NULL, &timestampTask_attributes);
+//	ecuTaskHandle = osThreadNew(EcuThread, NULL, &ecuTask_attributes);
+
+	// Mutexes
+//	queue_mutex->Create();
+//	data_mutex->Create();
+
+	// Hardware Timers
+//	HAL_TIM_Base_Start_IT(&htim7);
+
+	osKernelStart(); 				// Start scheduler
 }
