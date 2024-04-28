@@ -15,7 +15,7 @@
 #include <vector>
 
 // ST HAL Dependencies
-
+#include "gpio.h"
 
 // 3rd Party Libraryes and Frameworks
 #include "cmsis_os.h"
@@ -36,10 +36,24 @@ extern int to_log;
 #include "Application/data_payload.hpp"
 #include "Application/FileSystem/fat_fs.hpp"
 #include "Application/Mutex/mutex_cmsisv2.hpp"
+#include "Platform/GPIO/igpio.hpp"
+#include "Platform/GPIO/gpio_stmf4.hpp"
 
 
 void RtosInit();
 void DataLoggingThread(void *argument);
+
+
+/**************************************************************
+ * 				Toggle Switch Interrupt Callback
+ **************************************************************/
+std::shared_ptr<platform::GpioStmF4> gpio_callback_ptr(nullptr);
+
+void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin) {
+	gpio_callback_ptr->InterruptCallback(GPIO_Pin);
+}
+
+
 
 void cppMain() {
 	RtosInit();
@@ -73,6 +87,9 @@ void DataLoggingThread(void *argument) {
 
 	auto file_system = std::make_shared<application::FatFs>(USBHPath, USBHFatFS, USBHFile);
 
+	auto toggle_switch = std::make_shared<platform::GpioStmF4>(GPIOG, GPIO_PIN_8);
+	gpio_callback_ptr = toggle_switch;
+
 	for (;;) {
 
 		if(to_log == 1) {
@@ -90,8 +107,19 @@ void DataLoggingThread(void *argument) {
 			to_unmount = 0;
 		}
 
-		osDelay(500);
-		HAL_GPIO_TogglePin(GPIOE, GPIO_PIN_2);
+		if (toggle_switch->ToggleDetected()) {
+
+			if(toggle_switch->Read()) {
+				HAL_GPIO_WritePin(GPIOE, GPIO_PIN_2, GPIO_PIN_SET);
+			} else {
+				HAL_GPIO_WritePin(GPIOE, GPIO_PIN_2, GPIO_PIN_RESET);
+			}
+
+
+		}
+
+//		osDelay(500);
+//		HAL_GPIO_TogglePin(GPIOE, GPIO_PIN_2);
 
 	}
 }
