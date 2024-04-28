@@ -90,7 +90,7 @@ void DataLoggingThread(void *argument) {
 			to_unmount = 0;
 		}
 
-		osDelay(100);
+		osDelay(500);
 		HAL_GPIO_TogglePin(GPIOE, GPIO_PIN_2);
 
 	}
