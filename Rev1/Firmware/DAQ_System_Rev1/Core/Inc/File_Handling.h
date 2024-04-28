@@ -8,6 +8,10 @@
 #ifndef FILE_HANDLING_H_
 #define FILE_HANDLING_H_
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include "fatfs.h"
 #include "string.h"
 #include "stdio.h"
@@ -55,6 +59,8 @@ void Check_USB_Details (void);
 FRESULT Update_File (char *name, char *data);
 
 
-
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* FILE_HANDLING_RTOS_H_ */

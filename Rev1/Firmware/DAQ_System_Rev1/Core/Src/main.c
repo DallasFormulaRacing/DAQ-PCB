@@ -24,6 +24,7 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
+#include "../../Program/Src/app.hpp"
 extern int to_unmount;
 extern int to_log;
 
@@ -102,7 +103,8 @@ int main(void)
   MX_GPIO_Init();
   MX_FATFS_Init();
   /* USER CODE BEGIN 2 */
-  NVIC_SetPriorityGrouping( 0 );
+  cppMain();
+
   /* USER CODE END 2 */
 
   /* Init scheduler */
