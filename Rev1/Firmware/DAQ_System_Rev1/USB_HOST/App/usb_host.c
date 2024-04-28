@@ -103,32 +103,13 @@ static void USBH_UserProcess  (USBH_HandleTypeDef *phost, uint8_t id)
 
   case HOST_USER_DISCONNECTION:
   Appli_state = APPLICATION_DISCONNECT;
-//  Unmount_USB();
   to_unmount = 1;
+
   break;
 
   case HOST_USER_CLASS_ACTIVE:
   Appli_state = APPLICATION_READY;
   to_log = 1;
-//  Mount_USB();
-//
-//      Check_USB_Details();   // check space details
-//
-//      Scan_USB("/");   // scan for files and directories
-//
-//      Create_File("/ROOTFILE.txt");
-//      Write_File("/ROOTFILE.txt", "This data should be in root file\n");
-//
-//      Create_Dir("/DIR1");
-//      Create_File("/DIR1/DIR1FILE.txt");
-//      Write_File("/DIR1/DIR1FILE.txt", "This data should be in DIR1 file\n");
-//
-//      Create_Dir("/DIR2");
-//      Create_Dir("/DIR2/SUBDIR1");
-//      Create_File("/DIR2/SUBDIR1/DIR2FILE.txt");
-//      Write_File("/DIR2/SUBDIR1/DIR2FILE.txt", "This data should be in DIR2/SUBDIR1 file\n as i have nothing better to write/n so i just wrote this\n");
-//
-//      Update_File("/ROOTFILE.txt", "This updated data must be in second line of Root File\n");
 
   break;
 
