@@ -15,11 +15,23 @@
 #include <memory>
 #include <vector>
 
+// ST HAL Dependencies
+#include "gpio.h"
+
+#include "usart.h"
+extern UART_HandleTypeDef huart1;
+
+
+// 3rd Party Libraries and Frameworks
+
+
+// DFR Custom Dependencies
+#include "../../Core/Inc/retarget.h"
 
 
 void cppMain() {
 	// Enable `printf()` using USART
-//	RetargetInit(&huart1);
+	RetargetInit(&huart1);
 
 
 	for(;;) {
