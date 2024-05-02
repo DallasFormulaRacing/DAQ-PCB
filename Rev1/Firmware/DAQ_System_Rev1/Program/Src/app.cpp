@@ -17,6 +17,9 @@
 // ST HAL Dependencies
 #include "gpio.h"
 
+#include "tim.h"
+extern TIM_HandleTypeDef htim7;
+
 // 3rd Party Libraryes and Frameworks
 #include "cmsis_os.h"
 
@@ -62,7 +65,7 @@ void cppMain() {
 	 */
 
 	for(;;){
-
+		HAL_GPIO_TogglePin(GPIOE, GPIO_PIN_2);
 	}
 }
 
@@ -112,6 +115,14 @@ const osThreadAttr_t dataLoggingTask_attributes = {
   .priority = (osPriority_t) osPriorityHigh,
 };
 
+uint32_t timestamp_thread_flag = 0x00000001U;
+osThreadId_t timestampTaskHandle;
+const osThreadAttr_t timestampTask_attributes = {
+  .name = "timestampTask",
+  .stack_size = 128 * 8,
+  .priority = (osPriority_t) osPriorityHigh,
+};
+
 
 /**************************************************************
  * 						RTOS Threads
@@ -127,16 +138,39 @@ void DataLoggingThread(void *argument) {
 	application::DataLogger data_logger(file_system, toggle_switch, queue, usb_connected_observer, is_logging_flag);
 
 	for (;;) {
-
-		data_payload.timestamp_ += 1;
-		queue.Enqueue(data_payload);
-
 		data_logger.Run();
 		osDelay(1000);
 	}
 }
 
+void TimestampThread(void *argument) {
+	int count = 0;
+	static constexpr float kTimeDuration = 2.0f; // seconds
 
+	for(;;) {
+		osThreadFlagsWait(timestamp_thread_flag, osFlagsWaitAny, osWaitForever);
+		HAL_GPIO_TogglePin(GPIOE, GPIO_PIN_2);
+		if (is_logging_flag) {
+			count++;
+
+			data_payload.Lock();
+			data_payload.timestamp_ = count * kTimeDuration;
+			printf("Time: %f seconds\n", data_payload.timestamp_);
+
+
+			queue.Lock();
+			if(queue.IsFull()) {
+				printf("Queue is full! Data samples are being dropped...\n");
+			}
+			queue.Enqueue(data_payload);
+			queue.Unlock();
+			data_payload.Unlock();
+		}
+		else {
+			count = 0;
+		}
+	}
+}
 
 
 void RtosInit() {
@@ -145,7 +179,7 @@ void RtosInit() {
 
 	// Threads
 	dataLoggingTaskHandle = osThreadNew(DataLoggingThread, NULL, &dataLoggingTask_attributes);
-//	timestampTaskHandle = osThreadNew(TimestampThread, NULL, &timestampTask_attributes);
+	timestampTaskHandle = osThreadNew(TimestampThread, NULL, &timestampTask_attributes);
 //	ecuTaskHandle = osThreadNew(EcuThread, NULL, &ecuTask_attributes);
 
 	// Mutexes
@@ -153,7 +187,7 @@ void RtosInit() {
 	data_mutex->Create();
 
 	// Hardware Timers
-//	HAL_TIM_Base_Start_IT(&htim7);
+	HAL_TIM_Base_Start_IT(&htim7);
 
 	osKernelStart(); 				// Start scheduler
 }

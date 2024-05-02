@@ -20,6 +20,7 @@
 #include "main.h"
 #include "cmsis_os.h"
 #include "fatfs.h"
+#include "tim.h"
 #include "usb_host.h"
 #include "gpio.h"
 
@@ -50,6 +51,8 @@ extern int to_log;
 /* Private variables ---------------------------------------------------------*/
 
 /* USER CODE BEGIN PV */
+extern uint32_t timestamp_thread_flag;
+extern osThreadId_t timestampTaskHandle;
 
 /* USER CODE END PV */
 
@@ -95,6 +98,7 @@ int main(void)
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
   MX_FATFS_Init();
+  MX_TIM7_Init();
   /* USER CODE BEGIN 2 */
   cppMain();
 
@@ -182,6 +186,9 @@ void SystemClock_Config(void)
 void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 {
   /* USER CODE BEGIN Callback 0 */
+	if (htim->Instance == TIM7) {
+		osThreadFlagsSet(timestampTaskHandle, timestamp_thread_flag);
+	}
 
   /* USER CODE END Callback 0 */
   if (htim->Instance == TIM6) {
