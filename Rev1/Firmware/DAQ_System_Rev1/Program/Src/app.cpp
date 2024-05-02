@@ -26,14 +26,13 @@ extern FATFS USBHFatFS;    // File system object for USBH logical drive
 extern FIL USBHFile;       // File object for USBH
 
 #include "usb_host.h"
-//extern uint8_t usb_connected_observer; // USB connected/ejected interrupt
-extern int to_unmount;
-extern int to_log;
+extern uint8_t usb_connected_observer; // USB connected/ejected interrupt
 
 
 // DFR Custom Dependencies
 #include "Application/circular_queue.hpp"
 #include "Application/data_payload.hpp"
+#include "Application/DataLogger/DataLogger.hpp"
 #include "Application/FileSystem/fat_fs.hpp"
 #include "Application/Mutex/mutex_cmsisv2.hpp"
 #include "Platform/GPIO/igpio.hpp"
@@ -68,6 +67,41 @@ void cppMain() {
 }
 
 
+
+
+/**************************************************************
+ * 						RTOS Mutexes
+ **************************************************************/
+const osMutexAttr_t queue_mutex_attributes = {
+  "myThreadMutex",
+  osMutexRecursive | osMutexPrioInherit,
+  NULL,
+  0U
+};
+
+const osMutexAttr_t data_mutex_attributes = {
+  "myThreadMutex",
+  osMutexRecursive | osMutexPrioInherit,
+  NULL,
+  0U
+};
+
+auto queue_mutex = std::make_shared<application::MutexCmsisV2>(queue_mutex_attributes);
+auto data_mutex = std::make_shared<application::MutexCmsisV2>(data_mutex_attributes);
+
+
+
+/**************************************************************
+ * 					Shared Components
+ **************************************************************/
+static constexpr uint8_t kQueueSize = 20;
+application::CircularQueue<application::DataPayload> queue(kQueueSize, queue_mutex);
+
+application::DataPayload data_payload(data_mutex);
+
+bool is_logging_flag = false;
+
+
 /**************************************************************
  * 					RTOS Thread Properties
  **************************************************************/
@@ -90,37 +124,15 @@ void DataLoggingThread(void *argument) {
 	auto toggle_switch = std::make_shared<platform::GpioStmF4>(GPIOG, GPIO_PIN_8);
 	gpio_callback_ptr = toggle_switch;
 
+	application::DataLogger data_logger(file_system, toggle_switch, queue, usb_connected_observer, is_logging_flag);
+
 	for (;;) {
 
-		if(to_log == 1) {
-			file_system->Mount();
+		data_payload.timestamp_ += 1;
+		queue.Enqueue(data_payload);
 
-			file_system->CreateFile((char*)"please_work.txt\0");
-			file_system->OpenFile((char*)"please_work.txt\0", (char*)"a");
-			file_system->WriteFile((char*)"Hi there\n");
-			file_system->CloseFile();
-
-			to_log = 0;
-
-		} else if (to_unmount == 1) {
-			file_system->Unmount();
-			to_unmount = 0;
-		}
-
-		if (toggle_switch->ToggleDetected()) {
-
-			if(toggle_switch->Read()) {
-				HAL_GPIO_WritePin(GPIOE, GPIO_PIN_2, GPIO_PIN_SET);
-			} else {
-				HAL_GPIO_WritePin(GPIOE, GPIO_PIN_2, GPIO_PIN_RESET);
-			}
-
-
-		}
-
-//		osDelay(500);
-//		HAL_GPIO_TogglePin(GPIOE, GPIO_PIN_2);
-
+		data_logger.Run();
+		osDelay(1000);
 	}
 }
 
@@ -137,8 +149,8 @@ void RtosInit() {
 //	ecuTaskHandle = osThreadNew(EcuThread, NULL, &ecuTask_attributes);
 
 	// Mutexes
-//	queue_mutex->Create();
-//	data_mutex->Create();
+	queue_mutex->Create();
+	data_mutex->Create();
 
 	// Hardware Timers
 //	HAL_TIM_Base_Start_IT(&htim7);
