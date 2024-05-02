@@ -19,6 +19,7 @@
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
 #include "cmsis_os.h"
+#include "can.h"
 #include "fatfs.h"
 #include "tim.h"
 #include "usb_host.h"
@@ -99,6 +100,7 @@ int main(void)
   MX_GPIO_Init();
   MX_FATFS_Init();
   MX_TIM7_Init();
+  MX_CAN1_Init();
   /* USER CODE BEGIN 2 */
   cppMain();
 
