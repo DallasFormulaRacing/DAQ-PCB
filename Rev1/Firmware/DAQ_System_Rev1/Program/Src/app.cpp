@@ -30,13 +30,13 @@ extern uint8_t usb_connected_observer; // USB connected/ejected interrupt
 
 
 // DFR Custom Dependencies
-#include "Application/circular_queue.hpp"
-#include "Application/data_payload.hpp"
-#include "Application/DataLogger/DataLogger.hpp"
-#include "Application/FileSystem/fat_fs.hpp"
-#include "Application/Mutex/mutex_cmsisv2.hpp"
-#include "Platform/GPIO/igpio.hpp"
-#include "Platform/GPIO/gpio_stmf4.hpp"
+#include "../DFR_Libraries/Application/circular_queue.hpp"
+#include "../DFR_Libraries/Application/data_payload.hpp"
+#include "../DFR_Libraries/Application/DataLogger/DataLogger.hpp"
+#include "../DFR_Libraries/Application/FileSystem/fat_fs.hpp"
+#include "../DFR_Libraries/Application/Mutex/mutex_cmsisv2.hpp"
+#include "../DFR_Libraries/Platform/GPIO/igpio.hpp"
+#include "../DFR_Libraries/Platform/GPIO/gpio_stmf4.hpp"
 
 
 void RtosInit();

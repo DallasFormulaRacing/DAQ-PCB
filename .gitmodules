@@ -1,0 +1,3 @@
+[submodule "Rev1/Firmware/DAQ_System_Rev1/Program/DFR_Libraries"]
+	path = Rev1/Firmware/DAQ_System_Rev1/Program/DFR_Libraries
+	url = https://github.com/DallasFormulaRacing/DAQ-Firmware-Libraries.git
