@@ -20,6 +20,10 @@
 #include "can.h"
 extern CAN_HandleTypeDef hcan1;
 
+#include "tim.h"
+extern TIM_HandleTypeDef htim7;
+
+
 // 3rd Party Libraryes and Frameworks
 #include "cmsis_os.h"
 
@@ -48,6 +52,7 @@ extern uint8_t usb_connected_observer; // USB connected/ejected interrupt
 
 void RtosInit();
 void DataLoggingThread(void *argument);
+void TimestampThread(void *argument);
 
 
 /**************************************************************
@@ -133,6 +138,13 @@ const osThreadAttr_t dataLoggingTask_attributes = {
   .priority = (osPriority_t) osPriorityHigh,
 };
 
+uint32_t timestamp_thread_flag = 0x00000001U;
+osThreadId_t timestampTaskHandle;
+const osThreadAttr_t timestampTask_attributes = {
+  .name = "timestampTask",
+  .stack_size = 128 * 8,
+  .priority = (osPriority_t) osPriorityHigh,
+};
 
 osThreadId_t ecuTaskHandle;
 const osThreadAttr_t ecuTask_attributes = {
@@ -162,6 +174,36 @@ void DataLoggingThread(void *argument) {
 
 		data_logger.Run();
 		osDelay(1000);
+	}
+}
+
+
+void TimestampThread(void *argument) {
+	int count = 0;
+	static constexpr float kTimeDuration = 2.0f; // seconds
+
+	for(;;) {
+		osThreadFlagsWait(timestamp_thread_flag, osFlagsWaitAny, osWaitForever);
+
+		if (is_logging_flag) {
+			count++;
+
+			data_payload.Lock();
+			data_payload.timestamp_ = count * kTimeDuration;
+			printf("Time: %f seconds\n", data_payload.timestamp_);
+
+
+			queue.Lock();
+			if(queue.IsFull()) {
+				printf("Queue is full! Data samples are being dropped...\n");
+			}
+			queue.Enqueue(data_payload);
+			queue.Unlock();
+			data_payload.Unlock();
+		}
+		else {
+			count = 0;
+		}
 	}
 }
 
@@ -258,7 +300,7 @@ void RtosInit() {
 
 	// Threads
 	dataLoggingTaskHandle = osThreadNew(DataLoggingThread, NULL, &dataLoggingTask_attributes);
-//	timestampTaskHandle = osThreadNew(TimestampThread, NULL, &timestampTask_attributes);
+	timestampTaskHandle = osThreadNew(TimestampThread, NULL, &timestampTask_attributes);
 	ecuTaskHandle = osThreadNew(EcuThread, NULL, &ecuTask_attributes);
 
 	// Mutexes
@@ -266,7 +308,7 @@ void RtosInit() {
 	data_mutex->Create();
 
 	// Hardware Timers
-//	HAL_TIM_Base_Start_IT(&htim7);
+	HAL_TIM_Base_Start_IT(&htim7);
 
 	osKernelStart(); 				// Start scheduler
 }
